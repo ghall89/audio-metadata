@@ -166,7 +166,9 @@ extension Metadata {
       }
 
       if let date = rawValue as? Date {
-        let year = Calendar(identifier: .gregorian).component(.year, from: date)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let year = calendar.component(.year, from: date)
         return normalizedYear(year)
       }
 
@@ -179,7 +181,15 @@ extension Metadata {
         if let number = Int(trimmed), let normalized = normalizedYear(number) {
           return normalized
         }
-
+        // Try first 4 characters (YYYY-DD-MM, YYYY-MM-DD, etc.)
+        if trimmed.count >= 4, let year = Int(trimmed.prefix(4)), let normalized = normalizedYear(year) {
+          return normalized
+        }
+        // Try last 4 characters (DD-MM-YYYY, MM-DD-YYYY, etc.)
+        if trimmed.count >= 4, let year = Int(trimmed.suffix(4)), let normalized = normalizedYear(year) {
+          return normalized
+        }
+        // Fallback: find any valid 4-digit year
         if let range = trimmed.range(of: #"\b(1[0-9]{3}|2[0-9]{3})\b"#, options: .regularExpression) {
           return String(trimmed[range])
         }
