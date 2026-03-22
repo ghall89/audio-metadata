@@ -34,9 +34,9 @@ guard metadata.duration > 0 else {
 }
 
 func formatDuration(_ seconds: Double) -> String {
-	let m = Int(seconds) / 60
-	let s = Int(seconds) % 60
-	return String(format: "%d:%02d", m, s)
+	let min = Int(seconds) / 60
+	let sec = Int(seconds) % 60
+	return String(format: "%d:%02d", min, sec)
 }
 
 func field(_ label: String, _ value: String) {
