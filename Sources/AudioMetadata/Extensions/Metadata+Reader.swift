@@ -70,7 +70,9 @@ extension Metadata {
         guard let rawValue = try? await getMetaDataValue(for: identifier) else {
           continue
         }
-
+				
+				print(identifier)
+				
         if let year = extractYear(from: rawValue) {
           return year
         }

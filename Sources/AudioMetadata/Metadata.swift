@@ -65,10 +65,8 @@ public class Metadata {
       ]),
       duration: duration,
       year: metadata.metadataYearValue(for: [
-        .commonIdentifierCreationDate,
         .quickTimeMetadataYear,
         .quickTimeMetadataCreationDate,
-        .quickTimeUserDataCreationDate,
         .iTunesMetadataReleaseDate,
         .id3MetadataYear,
         .id3MetadataDate,
