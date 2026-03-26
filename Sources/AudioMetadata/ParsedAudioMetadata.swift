@@ -13,4 +13,13 @@ public struct ParsedAudioMetadata: Sendable {
 	public var duration: Double
 	public var year: String?
 	public var artwork: Data?
+	public var composer: String?
+	public var copyrightInfo: String?
+	public var publisher: String?
+	public var compilation: Bool
+	public var bpm: Int?
+	public var tempo: Int?
+	public var conductor: String?
+	public var producer: String?
+	public var contentRating: String?
 }

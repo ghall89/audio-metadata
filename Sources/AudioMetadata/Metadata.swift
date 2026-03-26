@@ -76,7 +76,52 @@ public class Metadata {
         .id3MetadataOriginalReleaseTime,
         .identifier3GPUserDataRecordingYear,
       ]),
-      artwork: compressArtwork(input: rawArtworkData)
+      artwork: compressArtwork(input: rawArtworkData),
+			composer: metadata.metadataValue(for: [
+				.id3MetadataComposer,
+				.iTunesMetadataComposer,
+				.quickTimeMetadataComposer,
+				.quickTimeUserDataComposer
+			]),
+			copyrightInfo: metadata.metadataValue(for: [
+				.id3MetadataCopyright,
+				.commonIdentifierCopyrights,
+				.isoUserDataCopyright,
+				.iTunesMetadataCopyright,
+				.quickTimeMetadataCopyright,
+				.id3MetadataCopyrightInformation
+			]),
+			publisher: metadata.metadataValue(for: [
+				.id3MetadataPublisher,
+				.commonIdentifierPublisher,
+				.iTunesMetadataPublisher,
+				.quickTimeMetadataPublisher,
+				.quickTimeUserDataPublisher
+			]),
+			compilation: metadata.metadataBoolValue(for: [
+				.iTunesMetadataDiscCompilation,
+			]),
+			bpm: metadata.metadataIntValue(for: [
+				.id3MetadataBeatsPerMinute,
+				.iTunesMetadataBeatsPerMin,
+			]),
+			tempo: metadata.metadataIntValue(for: [
+				.id3MetadataSynchronizedTempoCodes
+			]),
+			conductor: metadata.metadataValue(for: [
+				.id3MetadataConductor,
+				.id3MetadataConductor,
+			]),
+			producer: metadata.metadataValue(for: [
+				.iTunesMetadataProducer,
+				.id3MetadataProducedNotice,
+				.quickTimeMetadataProducer,
+				.quickTimeUserDataProduct,
+				.quickTimeUserDataProducer
+			]),
+			contentRating: metadata.metadataValue(for: [
+				.iTunesMetadataContentRating
+			]),
     )
   }
 

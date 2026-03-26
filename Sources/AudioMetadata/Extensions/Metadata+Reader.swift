@@ -28,6 +28,17 @@ extension Metadata {
       }
       return nil
     }
+		
+		func metadataBoolValue(for identifiers: [AVMetadataIdentifier]) async -> Bool {
+			for identifier in identifiers {
+				if let boolValue = try? await getMetaDataValue(for: identifier) as? Bool {
+					return boolValue
+				}
+			}
+			
+			// if no value, just set to false
+			return false
+		}
 
     /// Returns the first resolved integer value for the given metadata identifiers.
     ///

@@ -63,6 +63,34 @@ if let year = metadata.year {
 
 field("Duration", formatDuration(metadata.duration))
 
+if let composer = metadata.composer, !composer.isEmpty {
+	field("Composer", composer)
+}
+if let conductor = metadata.conductor, !conductor.isEmpty {
+	field("Conductor", conductor)
+}
+if let producer = metadata.producer, !producer.isEmpty {
+	field("Producer", producer)
+}
+if let publisher = metadata.publisher, !publisher.isEmpty {
+	field("Publisher", publisher)
+}
+if let copyright = metadata.copyrightInfo, !copyright.isEmpty {
+	field("Copyright", copyright)
+}
+if let rating = metadata.contentRating, !rating.isEmpty {
+	field("Rating", rating)
+}
+if let bpm = metadata.bpm {
+	field("BPM", String(bpm))
+}
+if let tempo = metadata.tempo {
+	field("Tempo", String(tempo))
+}
+if metadata.compilation {
+	field("Compilation", "yes")
+}
+
 if let artwork = metadata.artwork {
 	field("Artwork", "\(artwork.count) bytes")
 } else {
