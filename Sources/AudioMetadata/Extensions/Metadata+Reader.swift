@@ -16,29 +16,25 @@ extension Metadata {
       }
     }
 
-    func metadataValue(for identifiers: [AVMetadataIdentifier]) async -> String? {
+    func metadataValue(for identifiers: [AVMetadataIdentifier], fallbackKeys: [String] = []) async -> String? {
       for identifier in identifiers {
-        print("IDENTIFIER: \(identifier)")
         if let stringValue = try? await getMetaDataValue(for: identifier) as? String {
           return stringValue
         }
-        // If underlying is Int (numeric metadata normalized by getMetaDataValue), convert to String
         if let intValue = try? await getMetaDataValue(for: identifier) as? Int {
           return String(intValue)
         }
       }
-      return nil
+      return await rawStringValue(forKeys: fallbackKeys)
     }
 
-		func metadataBoolValue(for identifiers: [AVMetadataIdentifier]) async -> Bool {
+		func metadataBoolValue(for identifiers: [AVMetadataIdentifier], fallbackKeys: [String] = []) async -> Bool {
 			for identifier in identifiers {
 				if let boolValue = try? await getMetaDataValue(for: identifier) as? Bool {
 					return boolValue
 				}
 			}
-
-			// if no value, just set to false
-			return false
+			return await rawBoolValue(forKeys: fallbackKeys)
 		}
 
     /// Returns the first resolved integer value for the given metadata identifiers.
@@ -50,7 +46,7 @@ extension Metadata {
     ///
     /// This method normalises all three cases, returning the track/disc number as an `Int`
     /// regardless of the underlying format.
-    func metadataIntValue(for identifiers: [AVMetadataIdentifier]) async -> Int? {
+    func metadataIntValue(for identifiers: [AVMetadataIdentifier], fallbackKeys: [String] = []) async -> Int? {
       for identifier in identifiers {
         if let intValue = try? await getMetaDataValue(for: identifier) as? Int {
           return intValue
@@ -65,7 +61,7 @@ extension Metadata {
           }
         }
       }
-      return nil
+      return await rawIntValue(forKeys: fallbackKeys)
     }
 
     func metadataDataValue(for identifiers: [AVMetadataIdentifier]) async -> Data? {
@@ -77,19 +73,16 @@ extension Metadata {
       return nil
     }
 
-    func metadataYearValue(for identifiers: [AVMetadataIdentifier]) async -> String? {
+    func metadataYearValue(for identifiers: [AVMetadataIdentifier], fallbackKeys: [String] = []) async -> String? {
       for identifier in identifiers {
         guard let rawValue = try? await getMetaDataValue(for: identifier) else {
           continue
         }
-
-				print(identifier)
-
         if let year = extractYear(from: rawValue) {
           return year
         }
       }
-      return nil
+      return await rawYearValue(forKeys: fallbackKeys)
     }
 
     func durationSeconds() async -> Double? {
@@ -102,10 +95,61 @@ extension Metadata {
       }
     }
 
+    // AVFoundation exposes FLAC Vorbis Comments under key space "vorb" with no named constant
+    private static let vorbisKeySpace = AVMetadataKeySpace(rawValue: "vorb")
+
+    private func rawStringValue(forKeys keys: [String]) async -> String? {
+      for key in keys {
+        let items = AVMetadataItem.metadataItems(from: metadata, withKey: key, keySpace: Self.vorbisKeySpace)
+        if let item = items.first, let value = try? await item.load(.value) as? String {
+          return value
+        }
+      }
+      return nil
+    }
+
+    private func rawIntValue(forKeys keys: [String]) async -> Int? {
+      for key in keys {
+        let items = AVMetadataItem.metadataItems(from: metadata, withKey: key, keySpace: Self.vorbisKeySpace)
+        guard let item = items.first, let loaded = try? await item.load(.value) else { continue }
+        if let num = loaded as? NSNumber {
+          return num.intValue
+        }
+        if let string = loaded as? String {
+          let parts = string.split(separator: "/").map { $0.trimmingCharacters(in: .whitespaces) }
+          if let first = parts.first, let number = Int(first) {
+            return number
+          }
+        }
+      }
+      return nil
+    }
+
+    private func rawYearValue(forKeys keys: [String]) async -> String? {
+      for key in keys {
+        let items = AVMetadataItem.metadataItems(from: metadata, withKey: key, keySpace: Self.vorbisKeySpace)
+        if let item = items.first, let rawValue = try? await item.load(.value) {
+          if let year = extractYear(from: rawValue) {
+            return year
+          }
+        }
+      }
+      return nil
+    }
+
+    private func rawBoolValue(forKeys keys: [String]) async -> Bool {
+      for key in keys {
+        let items = AVMetadataItem.metadataItems(from: metadata, withKey: key, keySpace: Self.vorbisKeySpace)
+        if let item = items.first, let value = try? await item.load(.value) as? String {
+          return value == "1"
+        }
+      }
+      return false
+    }
+
     private func getMetaDataValue(
       for identifier: AVMetadataIdentifier,
     ) async throws -> Any? {
-      // Find the first metadata item matching the identifier
       guard
         let item = AVMetadataItem.metadataItems(from: metadata, filteredByIdentifier: identifier)
           .first
@@ -113,7 +157,6 @@ extension Metadata {
         return nil
       }
 
-      // Load the underlying value
       let loaded = try await item.load(.value)
 
       // Special-case iTunes track/disc identifiers which are often stored as binary atoms
@@ -124,7 +167,6 @@ extension Metadata {
           // Typical payload is >= 6 or 8 bytes; bytes[2..3] = number, bytes[4..5] = total (big-endian)
           if bytes.count >= 6 {
             let number = (Int(bytes[2]) << 8) | Int(bytes[3])
-            // If number is 0 but bytes[3] was nonzero, fallback to low byte only
             if number != 0 {
               return number
             }
@@ -132,9 +174,7 @@ extension Metadata {
             if lowByteOnly != 0 {
               return lowByteOnly
             }
-            // else continue to other fallbacks
           }
-          // If parsing fails, fall through to other cases
         }
 
         // 2) If the loader returned a string like "3/12", parse it
@@ -152,12 +192,9 @@ extension Metadata {
           return num.intValue
         }
 
-        // Otherwise, no usable value
         return nil
       }
 
-      // Default behavior for other identifiers:
-      // return Data, String, NSNumber, etc. as loaded
       if let stringValue = loaded as? String {
         return stringValue
       }
@@ -166,7 +203,7 @@ extension Metadata {
       }
       if let num = loaded as? NSNumber {
         return num.intValue
-      }  // normalize to Int when appropriate
+      }
       return loaded
     }
 
@@ -195,15 +232,12 @@ extension Metadata {
         if let number = Int(trimmed), let normalized = normalizedYear(number) {
           return normalized
         }
-        // Try first 4 characters (YYYY-DD-MM, YYYY-MM-DD, etc.)
         if trimmed.count >= 4, let year = Int(trimmed.prefix(4)), let normalized = normalizedYear(year) {
           return normalized
         }
-        // Try last 4 characters (DD-MM-YYYY, MM-DD-YYYY, etc.)
         if trimmed.count >= 4, let year = Int(trimmed.suffix(4)), let normalized = normalizedYear(year) {
           return normalized
         }
-        // Fallback: find any valid 4-digit year
         if let range = trimmed.range(of: #"\b(1[0-9]{3}|2[0-9]{3})\b"#, options: .regularExpression) {
           return String(trimmed[range])
         }
