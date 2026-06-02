@@ -18,6 +18,7 @@ extension Metadata {
 
     func metadataValue(for identifiers: [AVMetadataIdentifier]) async -> String? {
       for identifier in identifiers {
+        print("IDENTIFIER: \(identifier)")
         if let stringValue = try? await getMetaDataValue(for: identifier) as? String {
           return stringValue
         }
@@ -28,14 +29,14 @@ extension Metadata {
       }
       return nil
     }
-		
+
 		func metadataBoolValue(for identifiers: [AVMetadataIdentifier]) async -> Bool {
 			for identifier in identifiers {
 				if let boolValue = try? await getMetaDataValue(for: identifier) as? Bool {
 					return boolValue
 				}
 			}
-			
+
 			// if no value, just set to false
 			return false
 		}
@@ -81,9 +82,9 @@ extension Metadata {
         guard let rawValue = try? await getMetaDataValue(for: identifier) else {
           continue
         }
-				
+
 				print(identifier)
-				
+
         if let year = extractYear(from: rawValue) {
           return year
         }

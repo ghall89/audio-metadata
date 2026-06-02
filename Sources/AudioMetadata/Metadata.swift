@@ -14,7 +14,9 @@ public class Metadata {
         .quickTimeMetadataGenre,
         .quickTimeUserDataGenre,
         .identifier3GPUserDataGenre,
+        .id3MetadataContentType
       ]) ?? ""
+
     let rawGenreCode = await metadata.metadataValue(for: [.iTunesMetadataGenreID]) ?? ""
     let genre =
       nonEmptyString(rawGenreText) ?? GenreCodes.name(forRawMetadataValue: rawGenreCode) ?? ""
@@ -22,6 +24,7 @@ public class Metadata {
     let rawArtworkData = await metadata.metadataDataValue(for: [
       .commonIdentifierArtwork,
       .quickTimeMetadataArtwork,
+      .id3MetadataAttachedPicture,
     ])
 
     return await ParsedAudioMetadata(
@@ -30,11 +33,13 @@ public class Metadata {
         .commonIdentifierTitle,
         .iTunesMetadataSongName,
         .quickTimeUserDataTrackName,
+        .id3MetadataTitleDescription,
       ]) ?? "",
       artist: metadata.metadataValue(for: [
         .commonIdentifierArtist,
         .iTunesMetadataArtist,
         .quickTimeMetadataArtist,
+        .id3MetadataLeadPerformer,
       ]) ?? "",
       album: metadata.metadataValue(for: [
         .commonIdentifierAlbumName,
@@ -109,7 +114,6 @@ public class Metadata {
 				.id3MetadataSynchronizedTempoCodes
 			]),
 			conductor: metadata.metadataValue(for: [
-				.id3MetadataConductor,
 				.id3MetadataConductor,
 			]),
 			producer: metadata.metadataValue(for: [
