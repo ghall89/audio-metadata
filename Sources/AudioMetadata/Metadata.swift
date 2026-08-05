@@ -19,9 +19,8 @@ public class Metadata {
       fallbackKeys: ["GENRE", "genre"]
     ) ?? ""
 
-    let rawGenreCode = await metadata.metadataValue(for: [.iTunesMetadataGenreID]) ?? ""
-    let genre =
-      nonEmptyString(rawGenreText) ?? GenreCodes.name(forRawMetadataValue: rawGenreCode) ?? ""
+    let rawGenreCode = await metadata.iTunesRawGenreCode()
+    let genre = resolveGenre(text: rawGenreText, iTunesGenreID: rawGenreCode)
 
     let rawArtworkData = await metadata.metadataDataValue(for: [
       .commonIdentifierArtwork,
@@ -62,7 +61,6 @@ public class Metadata {
         for: [
           .iTunesMetadataAlbumArtist,
           .id3MetadataBand,
-          .id3MetadataOriginalArtist,
         ],
         fallbackKeys: ["ALBUMARTIST", "albumartist", "ALBUM ARTIST"]
       ) ?? "",
@@ -158,7 +156,6 @@ public class Metadata {
 					.iTunesMetadataProducer,
 					.id3MetadataProducedNotice,
 					.quickTimeMetadataProducer,
-					.quickTimeUserDataProduct,
 					.quickTimeUserDataProducer,
 				],
 				fallbackKeys: ["PRODUCER", "producer"]
@@ -170,6 +167,18 @@ public class Metadata {
   private func nonEmptyString(_ value: String) -> String? {
     let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.isEmpty ? nil : trimmed
+  }
+
+  /// Resolves a genre from the text genre tag (e.g. ID3 `TCON`) and the iTunes
+  /// numeric genre ID atom (`gnre`).
+  private func resolveGenre(text rawGenreText: String, iTunesGenreID rawGenreCode: Int?) -> String {
+    if let text = nonEmptyString(rawGenreText) {
+      return GenreCodes.name(forRawMetadataValue: text) ?? text
+    }
+    if let code = rawGenreCode {
+      return GenreCodes.name(for: code - 1) ?? ""
+    }
+    return ""
   }
 }
 
