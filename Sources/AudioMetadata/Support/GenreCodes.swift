@@ -207,10 +207,13 @@ public struct GenreCodes {
       return name(for: code)
     }
 
-    if trimmed.hasPrefix("("), trimmed.hasSuffix(")") {
-      let inner = String(trimmed.dropFirst().dropLast())
+    if trimmed.hasPrefix("("), let closeParen = trimmed.firstIndex(of: ")") {
+      let inner = trimmed[trimmed.index(after: trimmed.startIndex)..<closeParen]
+      let remainder = trimmed[trimmed.index(after: closeParen)...]
+        .trimmingCharacters(in: .whitespaces)
+
       if let code = Int(inner) {
-        return name(for: code)
+        return remainder.isEmpty ?  name(for: code) : remainder
       }
     }
 

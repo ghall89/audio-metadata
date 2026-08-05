@@ -95,7 +95,6 @@ public class Metadata {
           .quickTimeMetadataCreationDate,
           .iTunesMetadataReleaseDate,
           .id3MetadataYear,
-          .id3MetadataDate,
           .id3MetadataRecordingTime,
           .id3MetadataReleaseTime,
           .id3MetadataOriginalReleaseYear,
